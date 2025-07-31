@@ -130,7 +130,7 @@ export default function CameraCapturePage() {
           Capture Photo
         </h1>
         <p className="text-lg text-gray-700 mb-6 animate-fade-in-up">
-          Please position your camera to capture the baby's skin and tap the button below.
+          Please position your camera to capture the baby&apos;s skin and tap the button below.
         </p>
 
         {/* Camera and Preview Container */}

@@ -60,11 +60,11 @@ export default function ScanInstructionsPage() {
           </li>
           <li className="flex items-start">
             <span className="text-teal-500 font-bold text-xl mr-3">3.</span>
-            <span>Hold your phone steady, about 6-8 inches from your baby's face.</span>
+            <span>Hold your phone steady, about 6-8 inches from your baby&apos;s face.</span>
           </li>
           <li className="flex items-start">
             <span className="text-teal-500 font-bold text-xl mr-3">4.</span>
-            <span>Focus on the white part of the eye (sclera) or the baby's forehead.</span>
+            <span>Focus on the white part of the eye (sclera) or the baby&apos;s forehead.</span>
           </li>
           <li className="flex items-start">
             <span className="text-teal-500 font-bold text-xl mr-3">5.</span>

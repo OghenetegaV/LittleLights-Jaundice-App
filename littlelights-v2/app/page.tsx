@@ -7,6 +7,7 @@
 import { useRouter } from 'next/navigation'; // Imports the useRouter hook for navigation
 import React, { useState, useEffect } from 'react'; // Imports useState and useEffect for state management
 import SplashScreen from '../components/common/SplashScreen'; // Imports the SplashScreen component
+import NextImage from 'next/image'; // Imports the Next.js Image component and renames it to avoid conflicts
 
 export default function Home() {
   const router = useRouter(); // Initializes the router hook
@@ -49,15 +50,14 @@ export default function Home() {
       {/* It's positioned relative with a higher z-index to sit above the background blobs. */}
       {/* Uses a semi-transparent white background with backdrop blur and a subtle border. */}
       <div className="relative z-10 flex flex-col items-center text-center p-8 bg-white/80 backdrop-blur-sm rounded-xl shadow-lg max-w-md w-full animate-fade-in border border-white/50">
-        {/* Subtle icon for visual interest, with a slower pulse animation. */}
-        <svg
-          className="w-20 h-20 text-teal-500 mb-6 animate-pulse-slow"
-          fill="currentColor"
-          viewBox="0 0 24 24"
-          xmlns="http://www.w3.org/2000/svg"
-        >
-          <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zM11 7h2v6h-2zm0 8h2v2h-2z" />
-        </svg>
+        {/* Replaced the SVG icon with your app's logo using the Next.js Image component. */}
+        <NextImage
+          src="/images/logo/logo-colored.png" // The path to your logo in the public directory
+          alt="LittleLights App Logo" // Accessible alt text for the image
+          width={96} // Equivalent to w-24 (96px)
+          height={96} // Equivalent to h-24 (96px)
+          className="mb-6 animate-fade-in-up" // Styling for position and animation
+        />
 
         {/* Main heading with increased size, extra bold font, and subtle drop shadow. */}
         <h1 className="text-4xl md:text-5xl font-extrabold text-teal-700 mb-4 animate-fade-in-down drop-shadow-sm">
@@ -80,7 +80,9 @@ export default function Home() {
         {/* "Learn More About Jaundice" button with an arrow for visual cue. */}
         <button
           className="mt-6 text-teal-800 hover:text-teal-900 text-base font-semibold transition-colors duration-200"
-          onClick={() => alert('This would navigate to an "About Jaundice" or "Educational Resources" page.')}
+          // Replaced 'alert' with 'console.log' as 'alert' can cause issues in this environment.
+          // You can replace this with `router.push('/learn-more')` when you create that page.
+          onClick={() => console.log('This would navigate to an "About Jaundice" or "Educational Resources" page.')}
         >
           Learn More About Jaundice →
         </button>
