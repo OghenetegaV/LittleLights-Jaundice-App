@@ -1,13 +1,15 @@
 // app/scan/results/page.tsx
 // This page displays the results of the jaundice analysis, including the risk level and explanation.
 
-// This is a React Client Component to use client-side hooks like useRouter and useSearchParams.
+// This is a React Client Component to use client-side hooks like useRouter.
 "use client";
 
 import { useRouter, useSearchParams } from 'next/navigation';
-import React from 'react';
+import React, { Suspense } from 'react';
 
-export default function ResultsPage() {
+// This is the component that contains the logic which uses the `useSearchParams` hook.
+// It will be rendered inside a Suspense boundary.
+function ResultsContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -124,5 +126,14 @@ export default function ResultsPage() {
         </button>
       </div>
     </main>
+  );
+}
+
+// The main page component uses a Suspense boundary to wrap the client-side content.
+export default function ResultsPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <ResultsContent />
+    </Suspense>
   );
 }
