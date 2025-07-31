@@ -110,7 +110,10 @@ export default function CameraCapturePage() {
     } catch (err) {
       console.error('Analysis error:', err);
       setError('An error occurred during analysis. Please try again.');
+    } finally {
+      // This block will always execute, ensuring loading state is reset.
       setIsLoading(false);
+      setShowToast(false);
     }
   };
 
