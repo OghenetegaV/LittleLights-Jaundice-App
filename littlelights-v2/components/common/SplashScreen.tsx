@@ -20,6 +20,7 @@ export default function SplashScreen({ posterSrc }: SplashScreenProps) {
       {/* This div is now set to cover the entire parent (w-screen h-screen) */}
       {/* and is absolutely positioned to act as a background layer. */}
       {/* Removed max-width, aspect ratio, rounded corners, and shadow to allow full coverage. */}
+      {/* Removed overlay text as requested. */}
       <div className="absolute inset-0 overflow-hidden">
         {/* Poster image. */}
         {/* The image is set to cover the entire container. */}
