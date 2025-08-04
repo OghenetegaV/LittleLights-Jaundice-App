@@ -1,149 +1,121 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-// This function implements exponential backoff for API calls.
-// It retries a given asynchronous function with increasing delays.
-async function exponentialBackoff<T>(fn: () => Promise<T>, maxRetries = 5, initialDelay = 1000): Promise<T> {
-  let delay = initialDelay;
-  for (let i = 0; i < maxRetries; i++) {
-    try {
-      return await fn();
-    } catch (error) {
-      if (i < maxRetries - 1) {
-        console.error(`Attempt ${i + 1} failed. Retrying in ${delay}ms...`, error);
-        await new Promise(resolve => setTimeout(resolve, delay));
-        delay *= 2; // Double the delay for the next attempt
-      } else {
-        console.error(`All ${maxRetries} attempts failed.`);
-        throw error;
-      }
-    }
-  }
-  // This part is unreachable but satisfies TypeScript
-  throw new Error("Exponential backoff failed to complete.");
+// Define the expected structure of the API response
+interface JaundiceResult {
+  riskLevel: 'Low Risk' | 'Monitor Closely' | 'Urgent Consultation Recommended' | 'Error';
+  explanation: string;
 }
 
-// Handles POST requests to the API route.
+/**
+ * Handles POST requests to the /api/detect-jaundice route.
+ * This function processes an image and sends it to a large language model
+ * for a simulated jaundice risk assessment.
+ */
 export async function POST(req: NextRequest) {
   try {
-    const { imageData, mimeType } = await req.json();
-
-    // Retrieve the API key from environment variables.
-    // Ensure this is set in your .env.local file.
-    const apiKey = process.env.NEXT_PUBLIC_GEMINI_API_KEY;
-
+    // Check for a valid API key from environment variables
+    const apiKey = process.env.GEMINI_API_KEY;
     if (!apiKey) {
-      return NextResponse.json({ error: 'Gemini API key is not configured.' }, { status: 500 });
+      console.error("GEMINI_API_KEY environment variable is not set.");
+      return NextResponse.json({ error: 'API key not configured' }, { status: 500 });
     }
 
-    // Define the prompt for the Gemini model.
-    const prompt = `
-      You are an AI assistant specialized in analyzing images for signs of newborn jaundice.
-      Analyze the provided image of a baby's skin. Look for a yellowish discoloration, which is a key sign of jaundice.
-      Based on the visual evidence, classify the risk level for jaundice.
-      Provide one of the following risk levels: 'Low Risk', 'Monitor Closely', or 'Urgent Consultation Recommended'.
-      Additionally, provide a brief, professional explanation for your classification.
+    // Parse the request body to get the image data
+    const { imageData, mimeType } = await req.json();
+    if (!imageData || !mimeType) {
+      return NextResponse.json({ error: 'Image data or mimeType is missing' }, { status: 400 });
+    }
 
-      Respond in a JSON format with two keys:
-      1. 'riskLevel': a string with the risk classification.
-      2. 'explanation': a string with the explanation.
+    // Prepare the payload for the Gemini API call
+    const chatHistory = [
+      {
+        role: "user",
+        parts: [
+          { text: "Analyze this image of a newborn's skin to assess the risk of neonatal jaundice. Provide a simple risk level (e.g., 'Low Risk', 'Monitor Closely', 'Urgent Consultation Recommended') and a brief explanation. Do not give a medical diagnosis. The risk level and explanation should be based on the apparent degree of yellowing. Use a friendly and reassuring tone. Return a JSON object with 'riskLevel' and 'explanation' fields." },
+          {
+            inlineData: {
+              mimeType: mimeType,
+              data: imageData
+            }
+          }
+        ]
+      }
+    ];
 
-      Example response:
-      {
-        "riskLevel": "Low Risk",
-        "explanation": "Based on the image, there is no significant yellowish hue detected on the skin. The coloration appears normal for the infant's skin tone."
-      }
-      {
-        "riskLevel": "Monitor Closely",
-        "explanation": "A faint yellow tinge is visible on the face and chest. While not severe, it's recommended to continue monitoring and consult a pediatrician if the color deepens or spreads."
-      }
-      {
-        "riskLevel": "Urgent Consultation Recommended",
-        "explanation": "A noticeable yellow discoloration is present on the face, chest, and abdomen. This suggests a higher level of bilirubin, and an immediate consultation with a healthcare professional is advised."
-      }
-    `;
-
-    // Construct the payload for the Gemini API call.
     const payload = {
-      contents: [
-        {
-          parts: [
-            { text: prompt },
-            {
-              inlineData: {
-                mimeType: mimeType,
-                data: imageData,
-              },
-            },
-          ],
-        },
-      ],
+      contents: chatHistory,
+      generationConfig: {
+        responseMimeType: "application/json",
+        responseSchema: {
+          type: "OBJECT",
+          properties: {
+            "riskLevel": { "type": "STRING" },
+            "explanation": { "type": "STRING" }
+          },
+          "propertyOrdering": ["riskLevel", "explanation"]
+        }
+      }
     };
 
-    // Use exponential backoff for the fetch call to handle potential API issues.
-    const geminiResponse = await exponentialBackoff(async () => {
-      // **CORRECTED:** Using the correct model name for image understanding.
-      const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
-      const response = await fetch(apiUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
+    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
 
-      if (!response.ok) {
-        // If the API response is not ok, throw an error to trigger the retry.
-        throw new Error(`Gemini API error: ${response.status} ${response.statusText}`);
-      }
-
-      return response;
-    });
-
-    const geminiResult = await geminiResponse.json();
-
-    // Check for a valid response structure from the Gemini API.
-    if (
-      geminiResult &&
-      geminiResult.candidates &&
-      geminiResult.candidates.length > 0 &&
-      geminiResult.candidates[0].content &&
-      geminiResult.candidates[0].content.parts &&
-      geminiResult.candidates[0].content.parts.length > 0
-    ) {
-      let responseText = geminiResult.candidates[0].content.parts[0].text;
-      
+    // Make the API call with exponential backoff for resilience
+    let result;
+    for (let i = 0; i < 3; i++) { // Retry up to 3 times
       try {
-        // **FIX:** Clean the response string to remove markdown code fences (```json and ```)
-        // This makes the string valid JSON before parsing.
-        if (responseText.startsWith('```json')) {
-            responseText = responseText.replace(/^```json\n/, '').replace(/\n```$/, '');
+        const response = await fetch(apiUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+
+        if (!response.ok) {
+          throw new Error(`API call failed with status: ${response.status}`);
         }
 
-        // Parse the JSON response from Gemini.
-        const parsedResponse = JSON.parse(responseText);
-
-        // Send the parsed JSON back to the client.
-        return NextResponse.json(parsedResponse);
+        result = await response.json();
+        break; // Exit loop on success
       } catch (e) {
-        console.error('Failed to parse Gemini response as JSON:', responseText, e);
-        return NextResponse.json({
-          riskLevel: 'Error',
-          explanation: 'Failed to process the AI response. Please try again.',
-        }, { status: 500 });
+        console.error(`API call attempt ${i + 1} failed:`, e);
+        if (i < 2) {
+          await new Promise(resolve => setTimeout(resolve, Math.pow(2, i) * 1000)); // Exponential backoff
+        } else {
+          throw e; // Re-throw the error after all retries
+        }
       }
-    } else {
-      console.error('Unexpected Gemini API response structure:', geminiResult);
-      return NextResponse.json({
-        riskLevel: 'Error',
-        explanation: 'AI returned an unexpected response. Please try again.',
-      }, { status: 500 });
     }
-  } catch (error) {
-    console.error('Error in API route:', error);
+
+    // Safely parse the model's response and handle potential errors
+    const modelResponse = result?.candidates?.[0]?.content?.parts?.[0]?.text;
+    if (!modelResponse) {
+      console.error("Model response was empty or malformed:", JSON.stringify(result, null, 2));
+      return NextResponse.json(
+        { error: 'AI model did not return a valid response.' },
+        { status: 500 }
+      );
+    }
+
+    // The model should return a JSON string, so we parse it
+    let parsedResult: JaundiceResult;
+    try {
+      parsedResult = JSON.parse(modelResponse);
+    } catch (e) {
+      console.error("Failed to parse model's JSON response:", modelResponse);
+      return NextResponse.json(
+        { error: 'AI model returned an unparsable response.' },
+        { status: 500 }
+      );
+    }
+
+    // Return the final result to the front-end
+    return NextResponse.json(parsedResult, { status: 200 });
+
+  } catch (err) {
+    console.error('API endpoint error:', err);
     return NextResponse.json(
-      {
-        riskLevel: 'Error',
-        explanation: 'An internal server error occurred during analysis.',
-      },
+      { error: 'An unexpected error occurred during processing.' },
       { status: 500 }
     );
   }
 }
+
