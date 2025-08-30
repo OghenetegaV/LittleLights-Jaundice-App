@@ -5,9 +5,18 @@ import { initializeApp, getApps, getApp } from 'firebase/app';
 import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from 'firebase/auth';
 import { getFirestore, collection, addDoc, onSnapshot, serverTimestamp } from 'firebase/firestore';
 
-// Global variables for Firebase configuration
+// Your web app's Firebase configuration from your lib/firebase.ts file
+const firebaseConfig = {
+  apiKey: "AIzaSyBqBdAyVOG0Y9L7N7r9ACGihY-RSIRO6gA",
+  authDomain: "little-lights-v3.firebaseapp.com",
+  projectId: "little-lights-v3",
+  storageBucket: "little-lights-v3.firebasestorage.app",
+  messagingSenderId: "400248166021",
+  appId: "1:400248166021:web:5fb17db37f0ec5a9eb3bec",
+  measurementId: "G-G8VPS8FZ4W"
+};
+
 const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
 const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
 
 // Main component for the Bilirubin Scan page
@@ -18,7 +27,7 @@ const BilirubinScanPage = () => {
   const [cameraError, setCameraError] = useState(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [normalizationFactor, setNormalizationFactor] = useState(1.0);
-  const [isOffline, setIsOffline] = useState(!navigator.onLine);
+  const [isOffline, setIsOffline] = useState(false); // Initialized to false to prevent hydration errors
   const [isSaving, setIsSaving] = useState(false);
 
   // Firebase state
@@ -36,6 +45,13 @@ const BilirubinScanPage = () => {
 
   // useEffect for handling camera stream and Firebase setup
   useEffect(() => {
+    // Check for a valid Firebase configuration before initializing
+    if (!firebaseConfig || !firebaseConfig.apiKey) {
+      console.error("Firebase configuration is missing.");
+      setCameraError("Application is not configured correctly. Please check your Firebase configuration.");
+      return;
+    }
+
     // Initialize Firebase and set up authentication
     const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
     const authInstance = getAuth(app);
@@ -85,6 +101,8 @@ const BilirubinScanPage = () => {
     const handleOffline = () => setIsOffline(true);
     window.addEventListener('online', handleOnline);
     window.addEventListener('offline', handleOffline);
+    // Set initial offline state after component mounts
+    setIsOffline(!navigator.onLine);
 
     // Cleanup function to stop the camera stream and remove event listeners
     return () => {
@@ -101,8 +119,10 @@ const BilirubinScanPage = () => {
 
   // Function to handle the one-time device calibration
   const handleCalibration = () => {
-    alert("Heyyy");
-    if (!videoRef.current || !canvasRef.current) return;
+    if (!videoRef.current || !canvasRef.current) {
+      console.error("Video or canvas ref not ready for calibration.");
+      return;
+    }
 
     canvasRef.current.width = videoRef.current.videoWidth;
     canvasRef.current.height = videoRef.current.videoHeight;
@@ -264,9 +284,14 @@ const BilirubinScanPage = () => {
       return (
         <>
           <p className="text-sm text-center text-gray-500 mb-4">
-            Step 1: Calibrate your device. Please place a white object (like a piece of paper) in the square.
+            Step 1: Calibrate your device. Please align a white object with the square and press Calibrate.
           </p>
-          <div className="flex justify-center">
+          <div className="relative mt-6 rounded-xl overflow-hidden bg-gray-800 aspect-video" ref={videoContainerRef}>
+            <video ref={videoRef} className="absolute top-0 left-0 w-full h-full object-cover transform scaleX(-1)" autoPlay playsInline></video>
+            <div className="absolute top-1/2 left-1/2 w-16 h-16 -translate-x-1/2 -translate-y-1/2 border-2 border-dashed border-white z-10"></div>
+            <canvas ref={canvasRef} className="hidden"></canvas>
+          </div>
+          <div className="flex justify-center mt-6">
             <button
               onClick={handleCalibration}
               className="px-6 py-3 rounded-full font-bold text-white transition-all duration-300 bg-blue-500 hover:bg-blue-600 shadow-lg"
@@ -285,7 +310,7 @@ const BilirubinScanPage = () => {
           <p className="text-sm text-center text-gray-500 mb-4">
             Step 2: Capture your sclera. Please align the crosshair with the white of your eye.
           </p>
-          <div className="relative mt-6 rounded-xl overflow-hidden bg-gray-800" ref={videoContainerRef} style={{ paddingBottom: '75%' }}>
+          <div className="relative mt-6 rounded-xl overflow-hidden bg-gray-800 aspect-video" ref={videoContainerRef}>
             <video ref={videoRef} className="absolute top-0 left-0 w-full h-full object-cover transform scaleX(-1)" autoPlay playsInline></video>
             <div className="absolute top-1/2 left-1/2 w-5 h-5 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-red-500 z-10"></div>
             <div className="absolute top-4 left-4 right-4 bg-black bg-opacity-50 text-white text-center text-sm p-3 rounded-xl">
