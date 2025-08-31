@@ -108,13 +108,20 @@ export default function SignUpPage() {
       });
 
       console.log("User data saved to Firestore.");
-      // Redirect to the dashboard on successful sign-up
+      // Redirect to the dashboard on successful sign-in
       router.push('/dashboard');
-    } catch (err: any) {
-      console.error("Firebase Auth Error:", err.code, err.message);
-      const customMessage = firebaseAuthErrors[err.code];
-      setError(customMessage || 'An unexpected error occurred. Please try again.');
-    }
+      } catch (err: unknown) {
+        // Use a type guard to check if the error is an object with a code and message
+        if (err && typeof err === 'object' && 'code' in err && 'message' in err) {
+          console.error("Firebase Auth Error:", err.code, err.message);
+          const customMessage = firebaseAuthErrors[err.code as keyof typeof firebaseAuthErrors];
+          setError(customMessage || 'An unexpected error occurred. Please try again.');
+        } else {
+          // Handle generic or non-Firebase errors
+          console.error("An unexpected error occurred:", err);
+          setError('An unexpected error occurred. Please try again.');
+        }
+      }
   };
 
   return (

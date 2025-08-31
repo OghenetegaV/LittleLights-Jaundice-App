@@ -6,12 +6,10 @@
 import { useRouter } from 'next/navigation';
 import React, { useState, useEffect } from 'react';
 import SplashScreen from '../components/specific/SplashScreen';
-import NextImage from 'next/image';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 
 export default function Home() {
-  const router = useRouter();
   const [showSplash, setShowSplash] = useState(true);
   const SPLASH_DURATION = 3000;
 

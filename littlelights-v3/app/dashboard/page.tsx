@@ -63,7 +63,7 @@ const fadeIn = `
 
 export default function DashboardPage() {
   const router = useRouter();
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<unknown>(null);
   const [userData, setUserData] = useState<UserData | null>(null);
   const [isDarkMode, setIsDarkMode] = useState(false);
 
