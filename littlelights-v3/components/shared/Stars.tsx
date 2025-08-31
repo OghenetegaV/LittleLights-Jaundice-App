@@ -32,8 +32,8 @@ const Stars = () => {
           /* Define the fall animation for the stars */
           @keyframes fall {
             0% { transform: translateY(-100vh) rotate(0deg); opacity: 0; }
-            10% { opacity: 1; }
-            90% { opacity: 1; }
+            10% { opacity: 0.8; }
+            90% { opacity: 0.8; }
             100% { transform: translateY(200vh) rotate(360deg); opacity: 0; }
           }
           
