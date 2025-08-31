@@ -164,7 +164,7 @@ export default function DashboardPage() {
             <div className="flex items-center space-x-4">
               <div className="flex-1">
                 <h2 className="text-2xl font-bold">Welcome back, {userData.fullName.split(' ')[0]}</h2>
-                <p className="text-sm mt-1">Monitor your baby's health with confidence</p>
+                <p className="text-sm mt-1">Monitor your baby&apos;s health with confidence</p>
               </div>
               {/* Replace with a user profile image from the user's data */}
               <div className="w-16 h-16 bg-white dark:bg-gray-700 rounded-full overflow-hidden flex-shrink-0">

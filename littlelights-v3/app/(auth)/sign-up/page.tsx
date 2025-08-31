@@ -162,11 +162,11 @@ export default function SignUpPage() {
           {userType === 'parent' && (
             <>
               <div>
-                <label className="text-sm text-gray-600 font-medium mb-1 block" htmlFor="babysName">Baby's Name</label>
+                <label className="text-sm text-gray-600 font-medium mb-1 block" htmlFor="babysName">Baby&apos;s Name</label>
                 <Input id="babysName" type="text" placeholder="Enter baby's name" value={babysName} onChange={(e) => setBabysName(e.target.value)} />
               </div>
               <div>
-                <label className="text-sm text-gray-600 font-medium mb-1 block" htmlFor="dateOfBirth">Baby's Date of Birth</label>
+                <label className="text-sm text-gray-600 font-medium mb-1 block" htmlFor="dateOfBirth">Baby&apos;s Date of Birth</label>
                 <input id="dateOfBirth" type="date" value={dateOfBirth} onChange={(e) => setDateOfBirth(e.target.value)} className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 transition duration-150" />
               </div>
               <div>
