@@ -1,11 +1,20 @@
 import React, { useEffect, useState } from 'react';
 
+// Define the type for a single star object
+interface Star {
+  key: number;
+  left: number;
+  delay: number;
+  duration: number;
+}
+
 const Stars = () => {
-  const [stars, setStars] = useState([]);
+  // Explicitly type the state to be an array of Star objects
+  const [stars, setStars] = useState<Star[]>([]);
 
   useEffect(() => {
     const numberOfStars = 100;
-    const newStars = [];
+    const newStars: Star[] = [];
 
     // Generate an array of star objects with randomized properties
     for (let i = 0; i < numberOfStars; i++) {
@@ -26,57 +35,30 @@ const Stars = () => {
 
   return (
     <>
-      {/* Styles are included directly in the component for self-containment */}
+      {/* Styles for the animation, as Tailwind doesn't have a direct equivalent for @keyframes */}
       <style>
         {`
-          /* Define the fall animation for the stars */
           @keyframes fall {
             0% { transform: translateY(-100vh) rotate(0deg); opacity: 0; }
             10% { opacity: 0.8; }
             90% { opacity: 0.8; }
             100% { transform: translateY(200vh) rotate(360deg); opacity: 0; }
           }
-          
-          .stars-container {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: 9;
-            overflow: hidden;
-          }
-
-          /* Base styles for the stars */
-          .stars-container .star {
-            position: absolute;
-            background: yellow;
-            border-radius: 50%;
-            height: 2px;
-            width: 2px;
-            opacity: 0;
-            top: -20%;
-            box-shadow: 0 0 5px #fff;
-            animation: fall linear infinite;
-          }
-
-          /* Alternate style for some stars to create visual variety */
-          .stars-container .star:nth-child(even) {
-            height: 3px;
-            width: 3px;
-          }
         `}
       </style>
 
-      <div className="stars-container">
+      <div className="absolute -top-20 inset-0 overflow-hidden">
         {stars.map((star) => (
           <div
             key={star.key}
-            className="star"
+            className="absolute bg-yellow-300 rounded-full animate-[fall_linear_infinite]"
             style={{
               left: `${star.left}vw`,
               animationDelay: `${star.delay}s`,
               animationDuration: `${star.duration}s`,
+              height: Math.random() < 0.5 ? '2px' : '3px',
+              width: Math.random() < 0.5 ? '2px' : '3px',
+              boxShadow: '0 0 5px #fff',
             }}
           ></div>
         ))}
